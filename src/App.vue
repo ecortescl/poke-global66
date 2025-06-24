@@ -1,85 +1,171 @@
-<script setup>
-import { RouterLink, RouterView } from 'vue-router'
-import HelloWorld from './components/HelloWorld.vue'
-</script>
-
 <template>
-  <header class="bg-gradient-to-r from-blue-500 to-purple-600 text-white p-6 shadow-lg">
-    <img alt="Vue logo" class="logo mx-auto block mb-8" src="@/assets/logo.svg" width="125" height="125" />
+  <div id="app" class="min-h-screen bg-gray-50">
+    <!-- Navbar Principal -->
+    <nav class="bg-white shadow-lg sticky top-0 z-40">
+      <div class="container mx-auto px-4">
+        <div class="flex justify-between items-center py-4">
+          <!-- Logo -->
+          <router-link to="/"
+            class="flex items-center gap-3 text-2xl font-bold text-gray-800 hover:text-blue-600 transition-colors">
+            <span class="text-3xl">⚡</span>
+            PokéGlobal66
+          </router-link>
 
-    <div class="wrapper max-w-4xl mx-auto">
-      <HelloWorld msg="¡Tailwind CSS 3 configurado correctamente!" />
+          <!-- Navegación -->
+          <div class="hidden md:flex items-center gap-6">
+            <router-link to="/" class="nav-link" :class="{ 'active': $route.name === 'home' }">
+              🏠 Inicio
+            </router-link>
 
-      <nav class="mt-8">
-        <RouterLink to="/" class="bg-white text-blue-600 px-4 py-2 rounded-lg mr-4 hover:bg-blue-50 transition-colors">Home</RouterLink>
-        <RouterLink to="/about" class="bg-white text-purple-600 px-4 py-2 rounded-lg hover:bg-purple-50 transition-colors">About</RouterLink>
-      </nav>
+            <!-- Contador de favoritos en la navbar -->
+            <div v-if="favoritesCount > 0"
+              class="bg-red-100 text-red-800 px-3 py-1 rounded-full text-sm font-semibold flex items-center gap-2">
+              ❤️ {{ favoritesCount }} Favoritos
+            </div>
+          </div>
+
+          <!-- Menú móvil -->
+          <button @click="mobileMenuOpen = !mobileMenuOpen"
+            class="md:hidden text-gray-600 hover:text-gray-800 focus:outline-none">
+            <span class="text-2xl">{{ mobileMenuOpen ? '✕' : '☰' }}</span>
+          </button>
+        </div>
+
+        <!-- Menú móvil expandido -->
+        <div v-if="mobileMenuOpen" class="md:hidden border-t border-gray-200 py-4">
+          <router-link to="/" @click="mobileMenuOpen = false"
+            class="block py-2 text-gray-700 hover:text-blue-600 font-medium"
+            :class="{ 'text-blue-600 font-bold': $route.name === 'home' }">
+            🏠 Inicio
+          </router-link>
+
+          <div v-if="favoritesCount > 0"
+            class="mt-2 bg-red-100 text-red-800 px-3 py-2 rounded-lg text-sm font-semibold inline-flex items-center gap-2">
+            ❤️ {{ favoritesCount }} Favoritos
+          </div>
+        </div>
+      </div>
+    </nav>
+
+    <!-- Contenido principal -->
+    <router-view />
+
+    <!-- Indicador de estado de red (opcional) -->
+    <div v-if="!isOnline" class="fixed bottom-4 left-4 bg-red-500 text-white px-4 py-2 rounded-lg shadow-lg z-50">
+      📡 Sin conexión a internet
     </div>
-  </header>
-
-  <RouterView class="container mx-auto p-6" />
+  </div>
 </template>
 
+<script>
+import { mapState } from 'pinia'
+import { useFavoritesStore } from '@/stores/favorites'
+
+export default {
+  name: 'App',
+
+  data() {
+    return {
+      mobileMenuOpen: false,
+      isOnline: navigator.onLine
+    }
+  },
+
+  computed: {
+    ...mapState(useFavoritesStore, ['favoritesCount'])
+  },
+
+  methods: {
+    // Manejar cambios en el estado de conexión
+    handleOnlineStatus() {
+      this.isOnline = navigator.onLine
+    },
+
+    // Cerrar menú móvil al cambiar de ruta
+    closeMenu() {
+      this.mobileMenuOpen = false
+    }
+  },
+
+  mounted() {
+    // Escuchar eventos de conexión
+    window.addEventListener('online', this.handleOnlineStatus)
+    window.addEventListener('offline', this.handleOnlineStatus)
+
+    // Cerrar menú móvil al hacer click fuera
+    document.addEventListener('click', (e) => {
+      if (!e.target.closest('nav') && this.mobileMenuOpen) {
+        this.mobileMenuOpen = false
+      }
+    })
+  },
+
+  beforeUnmount() {
+    // Limpiar event listeners
+    window.removeEventListener('online', this.handleOnlineStatus)
+    window.removeEventListener('offline', this.handleOnlineStatus)
+  },
+
+  watch: {
+    // Cerrar menú móvil cuando cambie la ruta
+    '$route'() {
+      this.closeMenu()
+    }
+  }
+}
+</script>
+
 <style scoped>
-header {
-  line-height: 1.5;
-  max-height: 100vh;
+/* Estilos para la navegación */
+.nav-link {
+  @apply px-4 py-2 rounded-lg font-medium text-gray-700 hover:text-blue-600 hover:bg-blue-50 transition-all duration-200;
 }
 
-.logo {
-  display: block;
-  margin: 0 auto 2rem;
+.nav-link.active {
+  @apply text-blue-600 bg-blue-50 font-semibold;
 }
 
-nav {
-  width: 100%;
-  font-size: 12px;
-  text-align: center;
-  margin-top: 2rem;
+/* Animación para el menú móvil */
+.mobile-menu-enter-active,
+.mobile-menu-leave-active {
+  transition: all 0.3s ease;
 }
 
-nav a.router-link-exact-active {
-  color: var(--color-text);
+.mobile-menu-enter-from,
+.mobile-menu-leave-to {
+  opacity: 0;
+  transform: translateY(-10px);
 }
 
-nav a.router-link-exact-active:hover {
-  background-color: transparent;
+/* Estilos globales */
+#app {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
-nav a {
-  display: inline-block;
-  padding: 0 1rem;
-  border-left: 1px solid var(--color-border);
+/* Scroll suave */
+html {
+  scroll-behavior: smooth;
 }
 
-nav a:first-of-type {
-  border: 0;
+/* Personalizar scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
 }
 
-@media (min-width: 1024px) {
-  header {
-    display: flex;
-    place-items: center;
-    padding-right: calc(var(--section-gap) / 2);
-  }
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
 
-  .logo {
-    margin: 0 2rem 0 0;
-  }
+::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 4px;
+}
 
-  header .wrapper {
-    display: flex;
-    place-items: flex-start;
-    flex-wrap: wrap;
-  }
-
-  nav {
-    text-align: left;
-    margin-left: -1rem;
-    font-size: 1rem;
-
-    padding: 1rem 0;
-    margin-top: 1rem;
-  }
+::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
 }
 </style>
