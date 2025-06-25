@@ -9,13 +9,7 @@
             <div class="capture-flash"></div>
         </div>
 
-        <div class="pokeball" :class="pokeballClass" :style="pokeballStyle">
-            <div class="pokeball-top"></div>
-            <div class="pokeball-bottom"></div>
-            <div class="pokeball-center">
-                <div class="pokeball-button"></div>
-            </div>
-        </div>
+        <img src="/pokeball-clean.svg" alt="Pokeball" class="pokeball" :class="pokeballClass" :style="pokeballStyle" />
     </div>
 </template>
 
@@ -34,7 +28,7 @@ export default {
         // Tamaño de la pokeball
         size: {
             type: Number,
-            default: 40
+            default: 48
         }
     },
 
@@ -64,7 +58,9 @@ export default {
         pokeballStyle() {
             return {
                 width: `${this.size}px`,
-                height: `${this.size}px`
+                height: `${this.size}px`,
+                maxWidth: '100%',
+                maxHeight: '100%'
             }
         }
     }
@@ -76,16 +72,23 @@ export default {
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 40px;
-    height: 40px;
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: inherit;
+    background: transparent;
 }
 
 /* Pokeball base */
 .pokeball {
-    width: 40px;
-    height: 40px;
+    width: 48px;
+    height: 48px;
+    object-fit: contain;
     position: relative;
-    border-radius: 50%;
+    overflow: hidden;
+    background: transparent;
 }
 
 /* Animaciones de estado */
@@ -94,6 +97,14 @@ export default {
 }
 
 .pokeball-release {
+    animation: release 1.5s ease-in-out;
+}
+
+.animate-capturing {
+    animation: capture 2s ease-in-out;
+}
+
+.animate-releasing {
     animation: release 1.5s ease-in-out;
 }
 
@@ -118,13 +129,13 @@ export default {
     50%,
     70%,
     90% {
-        transform: translateX(-4px) scale(1);
+        transform: translateX(-2px) scale(1);
     }
 
     40%,
     60%,
     80% {
-        transform: translateX(4px) scale(1);
+        transform: translateX(2px) scale(1);
     }
 
     100% {
@@ -166,70 +177,17 @@ export default {
     }
 }
 
-/* Partes de la pokeball */
-.pokeball-top {
-    width: 100%;
-    height: 50%;
-    background: linear-gradient(to bottom, #ff0000 0%, #dc143c 100%);
-    border-radius: 40px 40px 0 0;
-    position: relative;
-}
-
-.pokeball-bottom {
-    width: 100%;
-    height: 50%;
-    background: linear-gradient(to top, #ffffff 0%, #f0f0f0 100%);
-    border-radius: 0 0 40px 40px;
-    position: relative;
-}
-
-.pokeball-center {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    width: 16px;
-    height: 16px;
-    background: #333;
-    border-radius: 50%;
-    border: 2px solid #fff;
-    z-index: 10;
-}
-
-.pokeball-button {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    width: 8px;
-    height: 8px;
-    background: #fff;
-    border-radius: 50%;
-    border: 1px solid #333;
-}
-
-/* Línea central de la pokeball */
-.pokeball::before {
-    content: '';
-    position: absolute;
-    top: 50%;
-    left: 0;
-    right: 0;
-    height: 2px;
-    background: #333;
-    z-index: 5;
-}
-
 /* Efectos de luz para captura */
 .capture-light-effects {
     position: absolute;
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    width: 200%;
-    height: 200%;
+    width: 100%;
+    height: 100%;
     pointer-events: none;
-    z-index: 20;
+    z-index: 10;
+    overflow: hidden;
 }
 
 .light-ray {

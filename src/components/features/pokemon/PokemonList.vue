@@ -22,7 +22,7 @@
                     <!-- Información del Pokémon -->
                     <div class="flex items-center space-x-4">
                         <!-- Contenedor de imagen con animación de captura -->
-                        <div class="relative w-12 h-12">
+                        <div class="relative w-12 h-12 z-10">
                             <!-- Imagen del Pokémon (solo si no es favorito o se está liberando) -->
                             <img v-if="!isFavorite(pokemon.name) || releasingPokemon === pokemon.name"
                                 :src="getPokemonImageUrl(pokemon)" :alt="pokemon.name"
@@ -34,15 +34,15 @@
                             <!-- Pokeball estática (cuando ya es favorito y no se está procesando) -->
                             <Pokeball
                                 v-if="isFavorite(pokemon.name) && capturingPokemon !== pokemon.name && releasingPokemon !== pokemon.name"
-                                state="static" />
+                                state="static" class="absolute inset-0 z-20" />
 
                             <!-- Pokeball con animación de captura -->
                             <Pokeball v-if="capturingPokemon === pokemon.name" state="capturing"
-                                class="absolute inset-0" />
+                                class="absolute inset-0 z-30" />
 
                             <!-- Pokeball con animación de liberación -->
                             <Pokeball v-if="releasingPokemon === pokemon.name" state="releasing"
-                                class="absolute inset-0" />
+                                class="absolute inset-0 z-30" />
                         </div>
 
                         <div>

@@ -1,5 +1,5 @@
 <template>
-    <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[9998]">
         <div class="text-center">
             <!-- Animación de Pokeball personalizada -->
             <div class="relative w-20 h-20 mx-auto mb-4">

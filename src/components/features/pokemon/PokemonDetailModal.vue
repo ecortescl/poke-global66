@@ -1,6 +1,7 @@
 <template>
     <!-- Modal Backdrop -->
-    <div v-if="isVisible" class="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 p-4"
+    <div v-if="isVisible"
+        class="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center modal-overlay p-4"
         @click="closeModal">
         <!-- Modal Content -->
         <div class="relative bg-white rounded-lg w-full max-w-sm mx-auto" @click.stop>
@@ -85,6 +86,9 @@
                 </div>
             </div>
         </div>
+
+        <!-- Alerta de éxito -->
+        <SuccessAlert :visible="showSuccessAlert" :message="alertMessage" @close="closeAlert" />
     </div>
 </template>
 
@@ -92,13 +96,14 @@
 import { mapActions, mapState } from 'pinia'
 import { useFavoritesStore } from '@/stores/favorites'
 import { usePokemonStore } from '@/stores/pokemon'
-import { Pokeball } from '@/components/ui'
+import { Pokeball, SuccessAlert } from '@/components/ui'
 
 export default {
     name: 'PokemonDetailModal',
 
     components: {
-        Pokeball
+        Pokeball,
+        SuccessAlert
     },
 
     props: {
@@ -121,7 +126,9 @@ export default {
             capturingPokemon: false,
             releasingPokemon: false,
             showingFullCaptureAnimation: false,
-            wasAlreadyFavorite: false
+            wasAlreadyFavorite: false,
+            showSuccessAlert: false,
+            alertMessage: ''
         }
     },
 
@@ -201,25 +208,14 @@ export default {
         async sharePokemon() {
             if (!this.pokemon || !this.pokemonDetails) return
 
-            const shareText = `🔥 Check out this amazing Pokémon!
-📛 Name: ${this.capitalizeFirst(this.pokemon.name)}
-🎯 Types: ${this.pokemonTypes}
-📏 Height: ${this.pokemonHeight}
-⚖️ Weight: ${this.pokemonWeight}
-#Pokemon #PokeGlobal66`
+            // Formato: Nombre, Tipos, Altura, Peso
+            const shareText = `${this.capitalizeFirst(this.pokemon.name)}, ${this.pokemonTypes}, ${this.pokemonHeight}, ${this.pokemonWeight}`
 
             try {
-                if (navigator.share) {
-                    await navigator.share({
-                        title: `Pokémon: ${this.capitalizeFirst(this.pokemon.name)}`,
-                        text: shareText
-                    })
-                } else {
-                    await navigator.clipboard.writeText(shareText)
-                    this.showNotification('✅ Information copied to clipboard!')
-                }
+                await navigator.clipboard.writeText(shareText)
+                this.showNotification('✅ Pokémon information copied to clipboard!')
             } catch (error) {
-                console.error('Error sharing:', error)
+                console.error('Error copying to clipboard:', error)
                 this.fallbackShare(shareText)
             }
         },
@@ -232,13 +228,19 @@ export default {
             textarea.select()
             document.execCommand('copy')
             document.body.removeChild(textarea)
-            this.showNotification('✅ Information copied to clipboard!')
+            this.showNotification('✅ Pokémon information copied to clipboard!')
         },
 
         // Mostrar notificación
         showNotification(message) {
-            // Simple notification (puedes mejorarlo con un toast component)
-            alert(message)
+            this.alertMessage = message
+            this.showSuccessAlert = true
+        },
+
+        // Cerrar alerta
+        closeAlert() {
+            this.showSuccessAlert = false
+            this.alertMessage = ''
         },
 
         // Extraer ID de URL
@@ -310,8 +312,8 @@ export default {
 }
 
 /* Asegurar que el modal esté encima de todo */
-.z-50 {
-    z-index: 50;
+.modal-overlay {
+    z-index: 10000 !important;
 }
 
 /* Efecto de captura para el Pokémon */
