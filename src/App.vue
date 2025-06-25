@@ -1,11 +1,11 @@
 <template>
   <div id="app" class="min-h-screen bg-gray-50">
-    <!-- Navbar Principal -->
-    <nav class="bg-white shadow-lg sticky top-0 z-40">
+    <!-- Navbar Principal - Solo se muestra en ciertas vistas -->
+    <nav v-if="showNavbar" class="bg-white shadow-lg sticky top-0 z-40">
       <div class="container mx-auto px-4">
         <div class="flex justify-between items-center py-4">
           <!-- Logo -->
-          <router-link to="/"
+          <router-link to="/home"
             class="flex items-center gap-3 text-2xl font-bold text-gray-800 hover:text-blue-600 transition-colors">
             <span class="text-3xl">⚡</span>
             PokéGlobal66
@@ -13,7 +13,7 @@
 
           <!-- Navegación -->
           <div class="hidden md:flex items-center gap-6">
-            <router-link to="/" class="nav-link" :class="{ 'active': $route.name === 'home' }">
+            <router-link to="/home" class="nav-link" :class="{ 'active': $route.name === 'home' }">
               🏠 Inicio
             </router-link>
 
@@ -33,7 +33,7 @@
 
         <!-- Menú móvil expandido -->
         <div v-if="mobileMenuOpen" class="md:hidden border-t border-gray-200 py-4">
-          <router-link to="/" @click="mobileMenuOpen = false"
+          <router-link to="/home" @click="mobileMenuOpen = false"
             class="block py-2 text-gray-700 hover:text-blue-600 font-medium"
             :class="{ 'text-blue-600 font-bold': $route.name === 'home' }">
             🏠 Inicio
@@ -51,7 +51,8 @@
     <router-view />
 
     <!-- Indicador de estado de red (opcional) -->
-    <div v-if="!isOnline" class="fixed bottom-4 left-4 bg-red-500 text-white px-4 py-2 rounded-lg shadow-lg z-50">
+    <div v-if="!isOnline && showNavbar"
+      class="fixed bottom-4 left-4 bg-red-500 text-white px-4 py-2 rounded-lg shadow-lg z-50">
       📡 Sin conexión a internet
     </div>
   </div>
@@ -72,7 +73,13 @@ export default {
   },
 
   computed: {
-    ...mapState(useFavoritesStore, ['favoritesCount'])
+    ...mapState(useFavoritesStore, ['favoritesCount']),
+
+    // Determinar si mostrar la navbar basado en la ruta actual
+    showNavbar() {
+      const hiddenRoutes = ['welcome', 'loading']
+      return !hiddenRoutes.includes(this.$route.name)
+    }
   },
 
   methods: {
