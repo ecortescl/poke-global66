@@ -20,8 +20,29 @@
                     class="bg-white rounded-lg shadow-sm p-4 flex items-center justify-between">
                     <!-- Información del Pokémon -->
                     <div class="flex items-center space-x-4">
-                        <img :src="getPokemonImageUrl(pokemon)" :alt="pokemon.name" class="w-12 h-12 object-contain"
-                            @error="(e) => handleImageError(e, pokemon)" />
+                        <!-- Contenedor de imagen con animación de captura -->
+                        <div class="relative w-12 h-12">
+                            <!-- Imagen del Pokémon (solo si no es favorito o se está liberando) -->
+                            <img v-if="!isFavorite(pokemon.name) || releasingPokemon === pokemon.name"
+                                :src="getPokemonImageUrl(pokemon)" :alt="pokemon.name"
+                                class="w-12 h-12 object-contain transition-all duration-300" :class="{
+                                    'animate-pulse opacity-50': capturingPokemon === pokemon.name,
+                                    'opacity-0': releasingPokemon === pokemon.name
+                                }" @error="(e) => handleImageError(e, pokemon)" />
+
+                            <!-- Pokeball estática (cuando ya es favorito y no se está procesando) -->
+                            <Pokeball v-if="isFavorite(pokemon.name) && !capturingPokemon && !releasingPokemon"
+                                state="static" />
+
+                            <!-- Pokeball con animación de captura -->
+                            <Pokeball v-if="capturingPokemon === pokemon.name" state="capturing"
+                                class="absolute inset-0" />
+
+                            <!-- Pokeball con animación de liberación -->
+                            <Pokeball v-if="releasingPokemon === pokemon.name" state="releasing"
+                                class="absolute inset-0" />
+                        </div>
+
                         <div>
                             <h3 class="text-lg font-medium text-gray-900 capitalize">
                                 {{ pokemon.name }}
@@ -30,7 +51,7 @@
                     </div>
 
                     <!-- Botón de favorito -->
-                    <button @click="toggleFavorite(pokemon.name)" class="p-2" :disabled="isProcessingFavorite">
+                    <button @click="handleToggleFavorite(pokemon)" class="p-2" :disabled="isProcessingFavorite">
                         <svg :class="isFavorite(pokemon.name) ? 'text-orange-400 fill-current' : 'text-gray-300'"
                             class="w-6 h-6" viewBox="0 0 24 24">
                             <path
@@ -69,16 +90,23 @@
 import { mapState, mapActions } from 'pinia'
 import { usePokemonStore } from '@/stores/pokemon'
 import { useFavoritesStore } from '@/stores/favorites'
+import { Pokeball } from '@/components/ui'
 
 export default {
     name: 'PokemonList',
+
+    components: {
+        Pokeball
+    },
 
     data() {
         return {
             searchQuery: '',
             displayedCount: 10, // Comenzar con 10 Pokémon
             isLoadingMore: false,
-            observer: null
+            observer: null,
+            capturingPokemon: null, // Pokémon que está siendo capturado
+            releasingPokemon: null  // Pokémon que está siendo liberado
         }
     },
 
@@ -116,6 +144,35 @@ export default {
         isFavorite(pokemonName) {
             const favoritesStore = useFavoritesStore()
             return favoritesStore.isPokemonFavorite(pokemonName)
+        },
+
+        // Manejar toggle de favorito con animación
+        async handleToggleFavorite(pokemon) {
+            const wasFavorite = this.isFavorite(pokemon.name)
+
+            if (!wasFavorite) {
+                // Capturar
+                this.capturingPokemon = pokemon.name
+
+                setTimeout(async () => {
+                    await this.toggleFavorite(pokemon.name)
+
+                    setTimeout(() => {
+                        this.capturingPokemon = null
+                    }, 500)
+                }, 100)
+            } else {
+                // Liberar
+                this.releasingPokemon = pokemon.name
+
+                setTimeout(async () => {
+                    await this.toggleFavorite(pokemon.name)
+
+                    setTimeout(() => {
+                        this.releasingPokemon = null
+                    }, 300)
+                }, 100)
+            }
         },
 
         // Obtener URL de imagen del Pokémon
@@ -221,40 +278,5 @@ export default {
 </script>
 
 <style scoped>
-/* Animaciones para la lista */
-.pokemon-list-enter-active {
-    transition: all 0.5s ease;
-}
-
-.pokemon-list-enter-from {
-    opacity: 0;
-    transform: translateY(20px) scale(0.95);
-}
-
-.pokemon-list-enter-to {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-}
-
-/* Animación de hover */
-.pokemon-list-item:hover {
-    transform: translateY(-2px);
-}
-
-/* Animación de pulse para loading */
-@keyframes pulse-red {
-
-    0%,
-    100% {
-        background-color: #ef4444;
-    }
-
-    50% {
-        background-color: #dc2626;
-    }
-}
-
-.animate-pulse-red {
-    animation: pulse-red 2s infinite;
-}
+/* Solo mantener estilos específicos del componente */
 </style>
