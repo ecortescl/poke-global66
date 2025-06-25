@@ -50,6 +50,9 @@
                                 <h3 class="text-lg font-medium text-gray-900 capitalize">
                                     {{ pokemon.name }}
                                 </h3>
+                                <span class="text-xs text-gray-500">
+                                    #{{ String(extractIdFromUrl(pokemon.url)).padStart(3, '0') }}
+                                </span>
                             </div>
                         </div>
 
