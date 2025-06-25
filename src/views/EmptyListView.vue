@@ -167,10 +167,10 @@
 </template>
 
 <script>
-import SearchInput from '@/components/SearchInput.vue'
-import SearchResultsList from '@/components/SearchResultsList.vue'
-import BottomNavigation from '@/components/BottomNavigation.vue'
-import PokemonInfiniteList from '@/components/PokemonInfiniteList.vue'
+import { SearchInput } from '@/components/ui'
+import { SearchResultsList } from '@/components/features/search'
+import { BottomNavigation } from '@/components/layout'
+import { PokemonInfiniteList } from '@/components/features/pokemon'
 import { useSearchPokemon } from '@/composables/useSearchPokemon'
 import { useFavoritesStore } from '@/stores/favorites'
 

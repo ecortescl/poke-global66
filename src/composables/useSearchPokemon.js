@@ -1,5 +1,6 @@
 import { usePokemonStore } from '@/stores/pokemon'
 import { useFavoritesStore } from '@/stores/favorites'
+import { intelligentSearch, generateSearchSuggestions } from '@/utils/fuzzySearch'
 
 export function useSearchPokemon() {
   const pokemonStore = usePokemonStore()
@@ -9,61 +10,22 @@ export function useSearchPokemon() {
   const state = {
     searchQuery: '',
     searchResults: [],
+    suggestions: [],
     isSearching: false,
     searchError: null,
+    searchType: 'none',
+    searchMessage: '',
   }
 
-  // Función para filtrar Pokémon por nombre
-  const getFilteredPokemons = (query) => {
-    if (!query || query.length < 2) {
+  // Función para obtener detalles de los Pokémon
+  const fetchPokemonDetails = async (pokemons) => {
+    if (!pokemons.length) {
       return []
     }
-
-    const searchTerm = query.toLowerCase().trim()
-    console.log('🔎 Buscando:', searchTerm)
-    console.log('📝 Pokemon disponibles:', pokemonStore.allPokemons.length)
-
-    // Debug: mostrar los primeros 5 pokemon para verificar estructura
-    if (pokemonStore.allPokemons.length > 0) {
-      console.log(
-        '🔍 Primeros Pokemon:',
-        pokemonStore.allPokemons.slice(0, 5).map((p) => p.name),
-      )
-    }
-
-    const filtered = pokemonStore.allPokemons
-      .filter((pokemon) => {
-        const pokemonName = pokemon.name.toLowerCase()
-        const matches = pokemonName.includes(searchTerm)
-        if (matches) {
-          console.log('✅ Encontrado:', pokemon.name)
-        }
-        return matches
-      })
-      .slice(0, 10) // Limitar a 10 resultados para performance
-
-    console.log('🎯 Resultados filtrados:', filtered.length)
-    return filtered
-  }
-
-  // Función para obtener detalles de los Pokémon filtrados
-  const fetchPokemonDetails = async (pokemons) => {
-    console.log('🔍 Obteniendo detalles para:', pokemons.length, 'pokemon')
-
-    if (!pokemons.length) {
-      console.log('❌ No hay pokemon para obtener detalles')
-      state.searchResults = []
-      state.isSearching = false
-      return
-    }
-
-    state.isSearching = true
-    state.searchError = null
 
     try {
       const detailPromises = pokemons.map(async (pokemon) => {
         try {
-          console.log('📡 Obteniendo detalles de:', pokemon.name)
           const details = await pokemonStore.fetchPokemonDetails(pokemon.url || pokemon.name)
           return details
             ? {
@@ -82,55 +44,103 @@ export function useSearchPokemon() {
       })
 
       const results = await Promise.all(detailPromises)
-      const filteredResults = results.filter(Boolean)
-      console.log('✅ Detalles obtenidos, resultados finales:', filteredResults.length)
-      state.searchResults = filteredResults
+      return results.filter(Boolean)
     } catch (error) {
       console.error('Error fetching pokemon details:', error)
-      state.searchError = 'Error al obtener detalles de los Pokémon'
-      state.searchResults = []
-    } finally {
-      state.isSearching = false
+      throw error
     }
   }
 
-  // Función para realizar búsqueda
+  // Función principal de búsqueda inteligente
   const performSearch = async (query) => {
-    console.log('🚀 Iniciando búsqueda para:', query)
+    console.log('🚀 Búsqueda inteligente para:', query)
     state.searchQuery = query
 
+    // Limpiar estado anterior
+    state.searchResults = []
+    state.suggestions = []
+    state.searchError = null
+    state.searchMessage = ''
+    state.searchType = 'none'
+
     if (!query || query.length < 2) {
-      state.searchResults = []
       return
     }
 
-    // Asegurar que tenemos la lista de Pokémon
-    if (!pokemonStore.hasPokemonList) {
-      console.log('📦 Cargando lista de Pokemon...')
-      state.isSearching = true
-      try {
-        await pokemonStore.fetchAllPokemons()
-        console.log('✅ Lista cargada, total Pokemon:', pokemonStore.allPokemons.length)
-      } catch (error) {
-        console.error('❌ Error cargando Pokemon:', error)
-        state.searchError = 'Error al cargar la lista de Pokémon'
-        state.isSearching = false
-        return
-      }
-    }
+    state.isSearching = true
 
-    // Obtener detalles de Pokémon filtrados
-    const filteredPokemons = getFilteredPokemons(query)
-    console.log('🎪 Pokemon filtrados para detalles:', filteredPokemons)
-    await fetchPokemonDetails(filteredPokemons)
+    try {
+      // Asegurar que tenemos la lista de Pokémon
+      if (!pokemonStore.hasPokemonList) {
+        console.log('📦 Cargando lista de Pokemon...')
+        await pokemonStore.fetchAllPokemons()
+      }
+
+      // Realizar búsqueda inteligente
+      const searchResult = intelligentSearch(pokemonStore.allPokemons, query, {
+        maxExactResults: 10,
+        maxSuggestions: 5,
+        similarityThreshold: 0.4,
+        minQueryLength: 2,
+      })
+
+      console.log('🎯 Resultado de búsqueda inteligente:', searchResult)
+
+      state.searchType = searchResult.searchType
+      state.searchMessage = searchResult.message || ''
+
+      if (searchResult.hasResults) {
+        // Procesar resultados exactos
+        if (searchResult.exact.length > 0) {
+          console.log('✅ Resultados exactos:', searchResult.exact.length)
+          const detailedResults = await fetchPokemonDetails(searchResult.exact)
+          state.searchResults = detailedResults
+        }
+
+        // Procesar sugerencias
+        if (searchResult.suggestions.length > 0) {
+          console.log('💡 Sugerencias:', searchResult.suggestions.length)
+          const detailedSuggestions = await fetchPokemonDetails(searchResult.suggestions)
+          state.suggestions = detailedSuggestions
+        }
+      } else {
+        // Sin resultados - generar sugerencias adicionales
+        const textSuggestions = generateSearchSuggestions(query)
+        if (textSuggestions.length > 0) {
+          console.log('🔧 Sugerencias de corrección:', textSuggestions)
+
+          // Buscar los Pokémon sugeridos
+          const suggestedPokemons = pokemonStore.allPokemons.filter((pokemon) =>
+            textSuggestions.some((suggestion) =>
+              pokemon.name.toLowerCase().includes(suggestion.toLowerCase()),
+            ),
+          )
+
+          if (suggestedPokemons.length > 0) {
+            const detailedSuggestions = await fetchPokemonDetails(suggestedPokemons)
+            state.suggestions = detailedSuggestions
+            state.searchMessage = `¿Quizás quisiste decir alguno de estos?`
+            state.searchType = 'correction'
+          }
+        }
+      }
+    } catch (error) {
+      console.error('❌ Error en búsqueda:', error)
+      state.searchError = 'Error al realizar la búsqueda'
+    } finally {
+      state.isSearching = false
+    }
   }
 
   // Función para limpiar búsqueda
   const clearSearch = () => {
     state.searchQuery = ''
     state.searchResults = []
+    state.suggestions = []
     state.searchError = null
     state.isSearching = false
+    state.searchType = 'none'
+    state.searchMessage = ''
   }
 
   // Función para alternar favorito
@@ -147,6 +157,12 @@ export function useSearchPokemon() {
     return favoritesStore.isPokemonFavorite(pokemonName)
   }
 
+  // Función para aplicar una sugerencia
+  const applySuggestion = async (suggestedPokemon) => {
+    console.log('✨ Aplicando sugerencia:', suggestedPokemon.name)
+    await performSearch(suggestedPokemon.name)
+  }
+
   return {
     // State getters
     get searchQuery() {
@@ -155,14 +171,26 @@ export function useSearchPokemon() {
     get searchResults() {
       return state.searchResults
     },
+    get suggestions() {
+      return state.suggestions
+    },
     get isSearching() {
       return state.isSearching
     },
     get searchError() {
       return state.searchError
     },
+    get searchType() {
+      return state.searchType
+    },
+    get searchMessage() {
+      return state.searchMessage
+    },
     get isProcessingFavorite() {
       return favoritesStore.isProcessingFavorite
+    },
+    get hasResults() {
+      return state.searchResults.length > 0 || state.suggestions.length > 0
     },
 
     // Methods
@@ -170,6 +198,7 @@ export function useSearchPokemon() {
     clearSearch,
     toggleFavorite,
     isFavorite,
+    applySuggestion,
 
     // Store getters
     get allPokemons() {

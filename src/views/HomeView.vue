@@ -2,9 +2,8 @@
 import { mapState, mapActions } from 'pinia'
 import { usePokemonStore } from '@/stores/pokemon'
 import { useFavoritesStore } from '@/stores/favorites'
-import PokemonList from '@/components/PokemonList.vue'
-import FavoritePokemonList from '@/components/FavoritePokemonList.vue'
-import LoadingSpinner from '@/components/LoadingSpinner.vue'
+import { PokemonList, FavoritePokemonList } from '@/components/features/pokemon'
+import { LoadingSpinner } from '@/components/ui'
 
 export default {
   name: 'HomeView',

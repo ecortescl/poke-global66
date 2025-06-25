@@ -27,7 +27,7 @@
 </template>
 
 <script>
-import PokeBallLoader from '../components/PokeBallLoader.vue'
+import { PokeBallLoader } from '@/components/ui'
 
 export default {
     name: 'LoadingView',

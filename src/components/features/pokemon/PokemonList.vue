@@ -99,7 +99,7 @@
 import { mapState, mapActions } from 'pinia'
 import { usePokemonStore } from '@/stores/pokemon'
 import { useFavoritesStore } from '@/stores/favorites'
-import PokemonCard from './PokemonCard.vue'
+import { PokemonCard } from './index.js'
 
 export default {
     name: 'PokemonList',
