@@ -3,7 +3,7 @@ import { usePokemonStore } from './pokemon'
 
 export const useFavoritesStore = defineStore('favorites', {
   state: () => ({
-    favoritePokemons: [], // Array de objetos Pokemon completos
+    favoritePokemons: JSON.parse(localStorage.getItem('pokeFavorites') || '[]'), // Array de objetos Pokemon completos
     isProcessingFavorite: false,
   }),
 
@@ -63,6 +63,7 @@ export const useFavoritesStore = defineStore('favorites', {
       // Verificar que no esté ya en favoritos para evitar duplicados
       if (!this.isPokemonFavorite(pokemonDetails.name)) {
         this.favoritePokemons.push(pokemonDetails)
+        this.saveFavoritesToStorage()
       }
     },
 
@@ -71,12 +72,19 @@ export const useFavoritesStore = defineStore('favorites', {
       this.favoritePokemons = this.favoritePokemons.filter(
         (pokemon) => pokemon.name !== pokemonName.toLowerCase(),
       )
+      this.saveFavoritesToStorage()
     },
 
     // Acción para limpiar todos los favoritos
     clearAllFavorites() {
       this.favoritePokemons = []
+      this.saveFavoritesToStorage()
       console.log('🗑️ Todos los favoritos han sido eliminados')
+    },
+
+    // Acción para guardar favoritos en localStorage
+    saveFavoritesToStorage() {
+      localStorage.setItem('pokeFavorites', JSON.stringify(this.favoritePokemons))
     },
 
     // Acción para obtener información de compartir de un Pokemon favorito
