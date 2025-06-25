@@ -145,7 +145,10 @@ export default {
         // URL de imagen del Pokémon
         pokemonImageUrl() {
             if (!this.pokemon) return ''
-            const id = this.extractIdFromUrl(this.pokemon.url)
+            // Si el pokemon tiene ID directo (favoritos), usarlo
+            // Si no, extraer de la URL (lista normal)
+            const id = this.pokemon.id || this.extractIdFromUrl(this.pokemon.url)
+            console.log(`🐛 Debug Modal - Pokemon: ${this.pokemon.name}, ID usado: ${id}, Pokemon completo:`, this.pokemon)
             return `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${id}.png`
         },
 
@@ -245,9 +248,10 @@ export default {
 
         // Extraer ID de URL
         extractIdFromUrl(url) {
-            if (url) {
+            if (url && typeof url === 'string') {
                 const urlParts = url.split('/')
-                return urlParts[urlParts.length - 2]
+                const id = urlParts[urlParts.length - 2]
+                return id && !isNaN(id) ? id : '1'
             }
             return '1'
         },

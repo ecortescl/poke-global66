@@ -98,15 +98,17 @@ export default {
 
         // Obtener URL de imagen del Pokémon
         getPokemonImageUrl(pokemon) {
+            // Los favoritos ya tienen ID directo, usar preferentemente
             const id = pokemon.id || this.extractIdFromUrl(pokemon.url)
             return `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${id}.png`
         },
 
         // Extraer ID de la URL
         extractIdFromUrl(url) {
-            if (url) {
+            if (url && typeof url === 'string') {
                 const urlParts = url.split('/')
-                return urlParts[urlParts.length - 2]
+                const id = urlParts[urlParts.length - 2]
+                return id && !isNaN(id) ? id : '1'
             }
             return '1'
         },
