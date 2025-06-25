@@ -1,51 +1,6 @@
 <template>
   <div id="app" class="min-h-screen bg-gray-50">
-    <!-- Navbar Principal - Solo se muestra en ciertas vistas -->
-    <nav v-if="showNavbar" class="bg-white shadow-lg sticky top-0 z-40">
-      <div class="container mx-auto px-4">
-        <div class="flex justify-between items-center py-4">
-          <!-- Logo -->
-          <router-link to="/home"
-            class="flex items-center gap-3 text-2xl font-bold text-gray-800 hover:text-blue-600 transition-colors">
-            <span class="text-3xl">⚡</span>
-            PokéGlobal66
-          </router-link>
 
-          <!-- Navegación -->
-          <div class="hidden md:flex items-center gap-6">
-            <router-link to="/home" class="nav-link" :class="{ 'active': $route.name === 'home' }">
-              🏠 Inicio
-            </router-link>
-
-            <!-- Contador de favoritos en la navbar -->
-            <div v-if="favoritesCount > 0"
-              class="bg-red-100 text-red-800 px-3 py-1 rounded-full text-sm font-semibold flex items-center gap-2">
-              ❤️ {{ favoritesCount }} Favoritos
-            </div>
-          </div>
-
-          <!-- Menú móvil -->
-          <button @click="mobileMenuOpen = !mobileMenuOpen"
-            class="md:hidden text-gray-600 hover:text-gray-800 focus:outline-none">
-            <span class="text-2xl">{{ mobileMenuOpen ? '✕' : '☰' }}</span>
-          </button>
-        </div>
-
-        <!-- Menú móvil expandido -->
-        <div v-if="mobileMenuOpen" class="md:hidden border-t border-gray-200 py-4">
-          <router-link to="/home" @click="mobileMenuOpen = false"
-            class="block py-2 text-gray-700 hover:text-blue-600 font-medium"
-            :class="{ 'text-blue-600 font-bold': $route.name === 'home' }">
-            🏠 Inicio
-          </router-link>
-
-          <div v-if="favoritesCount > 0"
-            class="mt-2 bg-red-100 text-red-800 px-3 py-2 rounded-lg text-sm font-semibold inline-flex items-center gap-2">
-            ❤️ {{ favoritesCount }} Favoritos
-          </div>
-        </div>
-      </div>
-    </nav>
 
     <!-- Contenido principal -->
     <router-view />
