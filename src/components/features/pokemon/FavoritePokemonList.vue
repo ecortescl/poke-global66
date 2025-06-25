@@ -43,10 +43,10 @@
             <div v-else class="text-center py-16">
                 <div class="text-6xl mb-4">💔</div>
                 <h3 class="text-xl font-medium text-gray-700 mb-2">
-                    No hay favoritos aún
+                    There are no favorites yet
                 </h3>
                 <p class="text-gray-500">
-                    Agrega algunos Pokémon a tus favoritos para verlos aquí
+                    Add some Pokémon to your favorites to see them here
                 </p>
             </div>
         </div>

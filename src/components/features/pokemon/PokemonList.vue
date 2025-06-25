@@ -65,10 +65,10 @@
             <div v-else-if="!isLoading && filteredPokemons.length === 0" class="text-center py-16">
                 <div class="text-6xl mb-4">🔍</div>
                 <h3 class="text-xl font-medium text-gray-700 mb-2">
-                    No se encontraron Pokémon
+                    No Pokémon found
                 </h3>
                 <p class="text-gray-500">
-                    Intenta con otro término de búsqueda
+                    Try with another search term
                 </p>
             </div>
 
@@ -76,7 +76,7 @@
             <div v-if="isLoadingMore" class="flex justify-center items-center py-8">
                 <div class="flex items-center space-x-3">
                     <div class="animate-spin rounded-full h-6 w-6 border-2 border-blue-500 border-t-transparent"></div>
-                    <span class="text-gray-600">Cargando más Pokémon...</span>
+                    <span class="text-gray-600">Loading more Pokémon...</span>
                 </div>
             </div>
 

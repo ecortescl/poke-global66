@@ -6,7 +6,7 @@
                 <div
                     class="animate-spin h-8 w-8 border-2 border-blue-500 border-t-transparent rounded-full mx-auto mb-4">
                 </div>
-                <p class="text-gray-600">Cargando Pokémon...</p>
+                <p class="text-gray-600">Loading Pokémon...</p>
             </div>
         </div>
 
@@ -53,13 +53,13 @@
                     <div
                         class="animate-spin h-6 w-6 border-2 border-blue-500 border-t-transparent rounded-full mx-auto mb-2">
                     </div>
-                    <p class="text-gray-600 text-sm">Cargando más Pokémon...</p>
+                    <p class="text-gray-600 text-sm">Loading more Pokémon...</p>
                 </div>
             </div>
 
             <!-- Final de la lista -->
             <div v-if="hasReachedEnd && displayedPokemons.length > 0" class="text-center py-8">
-                <p class="text-gray-500">¡Has visto todos los Pokémon disponibles!</p>
+                <p class="text-gray-500">You have seen all the available Pokémon!</p>
             </div>
         </div>
     </div>

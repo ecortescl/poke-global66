@@ -9,7 +9,7 @@
 
             <!-- Texto de carga -->
             <h2 class="text-2xl font-bold text-gray-800 mb-4">
-                Cargando Pokédex...
+                Loading Pokédex...
             </h2>
 
             <!-- Barra de progreso -->
