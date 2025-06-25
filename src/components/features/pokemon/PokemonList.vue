@@ -13,10 +13,10 @@
             </div>
         </div>
 
-        <!-- Lista de Pokémon -->
+        <!-- Lista de Pokémon con Scroll Infinito -->
         <div class="px-4 py-4">
-            <div v-if="paginatedPokemons.length > 0" class="space-y-4">
-                <div v-for="pokemon in paginatedPokemons" :key="pokemon.name"
+            <div v-if="displayedPokemons.length > 0" class="space-y-4">
+                <div v-for="pokemon in displayedPokemons" :key="pokemon.name"
                     class="bg-white rounded-lg shadow-sm p-4 flex items-center justify-between">
                     <!-- Información del Pokémon -->
                     <div class="flex items-center space-x-4">
@@ -41,7 +41,7 @@
             </div>
 
             <!-- Estado vacío -->
-            <div v-else-if="!isLoading" class="text-center py-16">
+            <div v-else-if="!isLoading && filteredPokemons.length === 0" class="text-center py-16">
                 <div class="text-6xl mb-4">🔍</div>
                 <h3 class="text-xl font-medium text-gray-700 mb-2">
                     No se encontraron Pokémon
@@ -51,29 +51,16 @@
                 </p>
             </div>
 
-            <!-- Paginación -->
-            <div v-if="totalPages > 1" class="mt-8 flex justify-center items-center gap-4">
-                <button @click="prevPage" :disabled="currentPage === 1"
-                    class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-300 transition-colors">
-                    ← Anterior
-                </button>
-
-                <div class="flex gap-2">
-                    <button v-for="page in visiblePages" :key="page" @click="goToPage(page)" :class="[
-                        page === currentPage
-                            ? 'bg-blue-500 text-white'
-                            : 'bg-gray-200 text-gray-700 hover:bg-gray-300',
-                        'px-3 py-2 rounded-lg transition-colors'
-                    ]">
-                        {{ page }}
-                    </button>
+            <!-- Loading indicator para scroll infinito -->
+            <div v-if="isLoadingMore" class="flex justify-center items-center py-8">
+                <div class="flex items-center space-x-3">
+                    <div class="animate-spin rounded-full h-6 w-6 border-2 border-blue-500 border-t-transparent"></div>
+                    <span class="text-gray-600">Cargando más Pokémon...</span>
                 </div>
-
-                <button @click="nextPage" :disabled="currentPage === totalPages"
-                    class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-300 transition-colors">
-                    Siguiente →
-                </button>
             </div>
+
+            <!-- Sentinel element para detectar scroll -->
+            <div ref="sentinel" class="h-10 w-full"></div>
         </div>
     </div>
 </template>
@@ -89,8 +76,9 @@ export default {
     data() {
         return {
             searchQuery: '',
-            currentPage: 1,
-            itemsPerPage: 20
+            displayedCount: 10, // Comenzar con 10 Pokémon
+            isLoadingMore: false,
+            observer: null
         }
     },
 
@@ -110,36 +98,14 @@ export default {
             )
         },
 
-        // Pokémon paginados
-        paginatedPokemons() {
-            const startIndex = (this.currentPage - 1) * this.itemsPerPage
-            const endIndex = startIndex + this.itemsPerPage
-            return this.filteredPokemons.slice(startIndex, endIndex)
+        // Pokémon que se muestran actualmente
+        displayedPokemons() {
+            return this.filteredPokemons.slice(0, this.displayedCount)
         },
 
-        // Total de páginas
-        totalPages() {
-            return Math.ceil(this.filteredPokemons.length / this.itemsPerPage)
-        },
-
-        // Páginas visibles en la paginación
-        visiblePages() {
-            const totalVisible = 5
-            const halfVisible = Math.floor(totalVisible / 2)
-
-            let startPage = Math.max(1, this.currentPage - halfVisible)
-            let endPage = Math.min(this.totalPages, startPage + totalVisible - 1)
-
-            if (endPage - startPage < totalVisible - 1) {
-                startPage = Math.max(1, endPage - totalVisible + 1)
-            }
-
-            const pages = []
-            for (let i = startPage; i <= endPage; i++) {
-                pages.push(i)
-            }
-
-            return pages
+        // Verificar si hay más Pokémon para cargar
+        hasMorePokemons() {
+            return this.displayedCount < this.filteredPokemons.length
         }
     },
 
@@ -172,40 +138,123 @@ export default {
             event.target.src = `https://via.placeholder.com/48x48/cccccc/666666?text=${pokemon.name.charAt(0).toUpperCase()}`
         },
 
-        // Navegación de páginas
-        prevPage() {
-            if (this.currentPage > 1) {
-                this.currentPage--
-                this.scrollToTop()
+        // Cargar más Pokémon
+        async loadMorePokemons() {
+            if (this.isLoadingMore || !this.hasMorePokemons) {
+                return
+            }
+
+            this.isLoadingMore = true
+
+            // Pequeño delay para UX
+            await new Promise(resolve => setTimeout(resolve, 300))
+
+            // Incrementar cantidad mostrada
+            this.displayedCount = Math.min(
+                this.displayedCount + 10,
+                this.filteredPokemons.length
+            )
+
+            this.isLoadingMore = false
+        },
+
+        // Configurar Intersection Observer
+        setupIntersectionObserver() {
+            if (this.observer) {
+                this.observer.disconnect()
+            }
+
+            const options = {
+                root: null,
+                rootMargin: '100px',
+                threshold: 0.1
+            }
+
+            this.observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting && this.hasMorePokemons && !this.isLoadingMore) {
+                        this.loadMorePokemons()
+                    }
+                })
+            }, options)
+
+            if (this.$refs.sentinel) {
+                this.observer.observe(this.$refs.sentinel)
             }
         },
 
-        nextPage() {
-            if (this.currentPage < this.totalPages) {
-                this.currentPage++
-                this.scrollToTop()
-            }
-        },
-
-        goToPage(page) {
-            this.currentPage = page
-            this.scrollToTop()
-        },
-
-        // Scroll suave hacia arriba cuando cambia de página
-        scrollToTop() {
-            window.scrollTo({
-                top: 0,
-                behavior: 'smooth'
+        // Resetear lista cuando cambia la búsqueda
+        resetList() {
+            this.displayedCount = 10
+            this.$nextTick(() => {
+                this.setupIntersectionObserver()
             })
         }
     },
 
     watch: {
-        // Resetear página cuando cambia la búsqueda
+        // Resetear cuando cambia la búsqueda
         searchQuery() {
-            this.currentPage = 1
+            this.resetList()
+        },
+
+        // Configurar observer cuando los datos están listos
+        allPokemons(newVal) {
+            if (newVal.length > 0) {
+                this.$nextTick(() => {
+                    this.setupIntersectionObserver()
+                })
+            }
+        }
+    },
+
+    mounted() {
+        this.setupIntersectionObserver()
+    },
+
+    beforeUnmount() {
+        if (this.observer) {
+            this.observer.disconnect()
         }
     }
 }
 </script>
+
+<style scoped>
+/* Animaciones para la lista */
+.pokemon-list-enter-active {
+    transition: all 0.5s ease;
+}
+
+.pokemon-list-enter-from {
+    opacity: 0;
+    transform: translateY(20px) scale(0.95);
+}
+
+.pokemon-list-enter-to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+}
+
+/* Animación de hover */
+.pokemon-list-item:hover {
+    transform: translateY(-2px);
+}
+
+/* Animación de pulse para loading */
+@keyframes pulse-red {
+
+    0%,
+    100% {
+        background-color: #ef4444;
+    }
+
+    50% {
+        background-color: #dc2626;
+    }
+}
+
+.animate-pulse-red {
+    animation: pulse-red 2s infinite;
+}
+</style>
