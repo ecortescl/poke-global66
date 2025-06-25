@@ -70,7 +70,7 @@ export default {
 
                     // Pequeño delay para mostrar la animación de éxito antes de navegar
                     setTimeout(() => {
-                        this.$router.push('/home')
+                        this.$router.push('/empty-list')
                     }, 800)
                 }
             }, interval)

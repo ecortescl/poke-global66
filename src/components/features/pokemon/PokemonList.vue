@@ -2,7 +2,7 @@
     <div class="min-h-screen bg-gray-50 pb-20">
         <!-- Barra de búsqueda -->
         <div class="bg-white px-4 py-4 shadow-sm">
-            <div class="relative">
+            <div class="container mx-auto max-w-md lg:max-w-none lg:w-3/5 relative">
                 <input type="text" placeholder="Search" v-model="searchQuery"
                     class="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg text-gray-700 placeholder-gray-400 focus:outline-none focus:border-blue-500" />
                 <svg class="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" fill="none"
@@ -15,75 +15,79 @@
 
         <!-- Lista de Pokémon con Scroll Infinito -->
         <div class="px-4 py-4">
-            <div v-if="displayedPokemons.length > 0" class="space-y-4">
-                <div v-for="pokemon in displayedPokemons" :key="pokemon.name"
-                    class="bg-white rounded-lg shadow-sm p-4 flex items-center justify-between cursor-pointer hover:bg-gray-50 transition-colors"
-                    @click="openPokemonModal(pokemon)">
-                    <!-- Información del Pokémon -->
-                    <div class="flex items-center space-x-4">
-                        <!-- Contenedor de imagen con animación de captura -->
-                        <div class="relative w-12 h-12 z-10">
-                            <!-- Imagen del Pokémon (solo si no es favorito o se está liberando) -->
-                            <img v-if="!isFavorite(pokemon.name) || releasingPokemon === pokemon.name"
-                                :src="getPokemonImageUrl(pokemon)" :alt="pokemon.name"
-                                class="w-12 h-12 object-contain transition-all duration-300" :class="{
-                                    'pokemon-capturing': capturingPokemon === pokemon.name,
-                                    'opacity-0': releasingPokemon === pokemon.name
-                                }" @error="(e) => handleImageError(e, pokemon)" />
+            <div class="container mx-auto max-w-md lg:max-w-none lg:w-3/5">
+                <div v-if="displayedPokemons.length > 0" class="space-y-4">
+                    <div v-for="pokemon in displayedPokemons" :key="pokemon.name"
+                        class="bg-white rounded-lg shadow-sm p-4 flex items-center justify-between cursor-pointer hover:bg-gray-50 transition-colors"
+                        @click="openPokemonModal(pokemon)">
+                        <!-- Información del Pokémon -->
+                        <div class="flex items-center space-x-4">
+                            <!-- Contenedor de imagen con animación de captura -->
+                            <div class="relative w-12 h-12 z-10">
+                                <!-- Imagen del Pokémon (solo si no es favorito o se está liberando) -->
+                                <img v-if="!isFavorite(pokemon.name) || releasingPokemon === pokemon.name"
+                                    :src="getPokemonImageUrl(pokemon)" :alt="pokemon.name"
+                                    class="w-12 h-12 object-contain transition-all duration-300" :class="{
+                                        'pokemon-capturing': capturingPokemon === pokemon.name,
+                                        'opacity-0': releasingPokemon === pokemon.name
+                                    }" @error="(e) => handleImageError(e, pokemon)" />
 
-                            <!-- Pokeball estática (cuando ya es favorito y no se está procesando) -->
-                            <Pokeball
-                                v-if="isFavorite(pokemon.name) && capturingPokemon !== pokemon.name && releasingPokemon !== pokemon.name"
-                                state="static" class="absolute inset-0 z-20" />
+                                <!-- Pokeball estática (cuando ya es favorito y no se está procesando) -->
+                                <Pokeball
+                                    v-if="isFavorite(pokemon.name) && capturingPokemon !== pokemon.name && releasingPokemon !== pokemon.name"
+                                    state="static" class="absolute inset-0 z-20" />
 
-                            <!-- Pokeball con animación de captura -->
-                            <Pokeball v-if="capturingPokemon === pokemon.name" state="capturing"
-                                class="absolute inset-0 z-30" />
+                                <!-- Pokeball con animación de captura -->
+                                <Pokeball v-if="capturingPokemon === pokemon.name" state="capturing"
+                                    class="absolute inset-0 z-30" />
 
-                            <!-- Pokeball con animación de liberación -->
-                            <Pokeball v-if="releasingPokemon === pokemon.name" state="releasing"
-                                class="absolute inset-0 z-30" />
+                                <!-- Pokeball con animación de liberación -->
+                                <Pokeball v-if="releasingPokemon === pokemon.name" state="releasing"
+                                    class="absolute inset-0 z-30" />
+                            </div>
+
+                            <div>
+                                <h3 class="text-lg font-medium text-gray-900 capitalize">
+                                    {{ pokemon.name }}
+                                </h3>
+                            </div>
                         </div>
 
-                        <div>
-                            <h3 class="text-lg font-medium text-gray-900 capitalize">
-                                {{ pokemon.name }}
-                            </h3>
-                        </div>
+                        <!-- Botón de favorito -->
+                        <button @click.stop="handleToggleFavorite(pokemon)" class="p-2"
+                            :disabled="isProcessingFavorite">
+                            <svg :class="isFavorite(pokemon.name) ? 'text-orange-400 fill-current' : 'text-gray-300'"
+                                class="w-6 h-6" viewBox="0 0 24 24">
+                                <path
+                                    d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+                            </svg>
+                        </button>
                     </div>
-
-                    <!-- Botón de favorito -->
-                    <button @click.stop="handleToggleFavorite(pokemon)" class="p-2" :disabled="isProcessingFavorite">
-                        <svg :class="isFavorite(pokemon.name) ? 'text-orange-400 fill-current' : 'text-gray-300'"
-                            class="w-6 h-6" viewBox="0 0 24 24">
-                            <path
-                                d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
-                        </svg>
-                    </button>
                 </div>
-            </div>
 
-            <!-- Estado vacío -->
-            <div v-else-if="!isLoading && filteredPokemons.length === 0" class="text-center py-16">
-                <div class="text-6xl mb-4">🔍</div>
-                <h3 class="text-xl font-medium text-gray-700 mb-2">
-                    No Pokémon found
-                </h3>
-                <p class="text-gray-500">
-                    Try with another search term
-                </p>
-            </div>
-
-            <!-- Loading indicator para scroll infinito -->
-            <div v-if="isLoadingMore" class="flex justify-center items-center py-8">
-                <div class="flex items-center space-x-3">
-                    <div class="animate-spin rounded-full h-6 w-6 border-2 border-blue-500 border-t-transparent"></div>
-                    <span class="text-gray-600">Loading more Pokémon...</span>
+                <!-- Estado vacío -->
+                <div v-else-if="!isLoading && filteredPokemons.length === 0" class="text-center py-16">
+                    <div class="text-6xl mb-4">🔍</div>
+                    <h3 class="text-xl font-medium text-gray-700 mb-2">
+                        No Pokémon found
+                    </h3>
+                    <p class="text-gray-500">
+                        Try with another search term
+                    </p>
                 </div>
-            </div>
 
-            <!-- Sentinel element para detectar scroll -->
-            <div ref="sentinel" class="h-10 w-full"></div>
+                <!-- Loading indicator para scroll infinito -->
+                <div v-if="isLoadingMore" class="flex justify-center items-center py-8">
+                    <div class="flex items-center space-x-3">
+                        <div class="animate-spin rounded-full h-6 w-6 border-2 border-blue-500 border-t-transparent">
+                        </div>
+                        <span class="text-gray-600">Loading more Pokémon...</span>
+                    </div>
+                </div>
+
+                <!-- Sentinel element para detectar scroll -->
+                <div ref="sentinel" class="h-10 w-full"></div>
+            </div>
         </div>
 
         <!-- Modal de detalles del Pokémon -->

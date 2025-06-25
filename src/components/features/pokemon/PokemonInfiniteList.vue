@@ -13,7 +13,7 @@
         <!-- Lista de Pokémon -->
         <div v-else class="space-y-0">
             <div v-for="pokemon in displayedPokemons" :key="pokemon.name"
-                class="flex items-center justify-between px-6 py-4 hover:bg-gray-50 cursor-pointer transition-colors duration-150 border-b border-gray-100 last:border-b-0 bg-white"
+                class="flex items-center justify-between px-4 sm:px-6 py-4 hover:bg-gray-50 cursor-pointer transition-colors duration-150 border-b border-gray-100 last:border-b-0 bg-white"
                 @click="selectPokemon(pokemon)">
                 <!-- Pokemon Info -->
                 <div class="flex items-center space-x-4">
@@ -103,26 +103,35 @@ export default {
 
     methods: {
         async loadInitialPokemons() {
+            console.log('🎬 Iniciando carga inicial de Pokémon...')
             this.isInitialLoading = true
 
             try {
                 // Asegurar que tenemos la lista de Pokémon
                 if (!this.pokemonStore.hasPokemonList) {
+                    console.log('📋 Cargando lista de Pokémon desde API...')
                     await this.pokemonStore.fetchAllPokemons(151) // Gen I
                 }
+
+                console.log(`✅ Lista base cargada: ${this.pokemonStore.allPokemons.length} Pokémon`)
 
                 // Cargar primera página
                 await this.loadMorePokemons()
             } catch (error) {
-                console.error('Error loading initial pokemons:', error)
+                console.error('❌ Error loading initial pokemons:', error)
             } finally {
                 this.isInitialLoading = false
+                console.log('🏁 Carga inicial completada')
             }
         },
 
         async loadMorePokemons() {
-            if (this.isLoadingMore || this.hasReachedEnd) return
+            if (this.isLoadingMore || this.hasReachedEnd) {
+                console.log('⏸️ loadMorePokemons cancelado:', { isLoadingMore: this.isLoadingMore, hasReachedEnd: this.hasReachedEnd })
+                return
+            }
 
+            console.log(`🔄 Cargando página ${this.currentPage + 1}...`)
             this.isLoadingMore = true
 
             try {
@@ -130,7 +139,10 @@ export default {
                 const endIndex = startIndex + this.pageSize
                 const pokemonBatch = this.pokemonStore.allPokemons.slice(startIndex, endIndex)
 
+                console.log(`📦 Lote obtenido: ${pokemonBatch.length} Pokémon (índices ${startIndex}-${endIndex - 1})`)
+
                 if (pokemonBatch.length === 0) {
+                    console.log('🔚 No hay más Pokémon - llegamos al final')
                     this.hasReachedEnd = true
                     return
                 }
@@ -168,26 +180,47 @@ export default {
                 this.displayedPokemons.push(...pokemonsWithDetails)
                 this.currentPage++
 
+                console.log(`✅ Página ${this.currentPage} cargada. Total mostrado: ${this.displayedPokemons.length}`)
+
                 // Verificar si llegamos al final
                 if (endIndex >= this.pokemonStore.allPokemons.length) {
+                    console.log('🔚 Llegamos al final de todos los Pokémon')
                     this.hasReachedEnd = true
                 }
 
             } catch (error) {
-                console.error('Error loading more pokemons:', error)
+                console.error('❌ Error loading more pokemons:', error)
             } finally {
                 this.isLoadingMore = false
+                console.log(`🔄 Estado final: isLoadingMore=${this.isLoadingMore}, hasReachedEnd=${this.hasReachedEnd}`)
             }
         },
 
         handleScroll() {
             const container = this.$refs.scrollContainer
-            if (!container) return
+            if (!container) {
+                console.warn('🚨 ScrollContainer no encontrado')
+                return
+            }
 
             const { scrollTop, scrollHeight, clientHeight } = container
             const threshold = 200 // Cargar cuando estés a 200px del final
+            const distanceFromBottom = scrollHeight - (scrollTop + clientHeight)
 
-            if (scrollTop + clientHeight >= scrollHeight - threshold) {
+            // Debug logs
+            console.log(`📜 Scroll Debug:`, {
+                scrollTop: Math.round(scrollTop),
+                scrollHeight: Math.round(scrollHeight),
+                clientHeight: Math.round(clientHeight),
+                distanceFromBottom: Math.round(distanceFromBottom),
+                threshold,
+                shouldLoad: distanceFromBottom <= threshold,
+                isLoadingMore: this.isLoadingMore,
+                hasReachedEnd: this.hasReachedEnd
+            })
+
+            if (distanceFromBottom <= threshold && !this.isLoadingMore && !this.hasReachedEnd) {
+                console.log('🚀 Activando carga de más Pokémon')
                 this.loadMorePokemons()
             }
         },
