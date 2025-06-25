@@ -17,7 +17,8 @@
         <div class="px-4 py-4">
             <div v-if="filteredFavorites.length > 0" class="space-y-4">
                 <div v-for="pokemon in filteredFavorites" :key="pokemon.name"
-                    class="bg-white rounded-lg shadow-sm p-4 flex items-center justify-between">
+                    class="bg-white rounded-lg shadow-sm p-4 flex items-center justify-between cursor-pointer hover:bg-gray-50 transition-colors"
+                    @click="openPokemonModal(pokemon)">
                     <!-- Información del Pokémon -->
                     <div class="flex items-center space-x-4">
                         <img :src="getPokemonImageUrl(pokemon)" :alt="pokemon.name" class="w-12 h-12 object-contain"
@@ -30,7 +31,7 @@
                     </div>
 
                     <!-- Botón de favorito -->
-                    <button @click="toggleFavorite(pokemon.name)" class="p-2" :disabled="isProcessingFavorite">
+                    <button @click.stop="toggleFavorite(pokemon.name)" class="p-2" :disabled="isProcessingFavorite">
                         <svg class="w-6 h-6 text-orange-400 fill-current" viewBox="0 0 24 24">
                             <path
                                 d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
@@ -50,19 +51,29 @@
                 </p>
             </div>
         </div>
+
+        <!-- Modal de detalles del Pokémon -->
+        <PokemonDetailModal :pokemon="selectedPokemon" :isVisible="isModalVisible" @close="closeModal" />
     </div>
 </template>
 
 <script>
 import { mapState, mapActions } from 'pinia'
 import { useFavoritesStore } from '@/stores/favorites'
+import PokemonDetailModal from './PokemonDetailModal.vue'
 
 export default {
     name: 'FavoritePokemonList',
 
+    components: {
+        PokemonDetailModal
+    },
+
     data() {
         return {
-            searchQuery: ''
+            searchQuery: '',
+            selectedPokemon: null,
+            isModalVisible: false
         }
     },
 
@@ -103,6 +114,18 @@ export default {
         // Manejar error de imagen
         handleImageError(event, pokemon) {
             event.target.src = `https://via.placeholder.com/48x48/cccccc/666666?text=${pokemon.name.charAt(0).toUpperCase()}`
+        },
+
+        // Abrir modal con detalles del Pokémon
+        openPokemonModal(pokemon) {
+            this.selectedPokemon = pokemon
+            this.isModalVisible = true
+        },
+
+        // Cerrar modal
+        closeModal() {
+            this.isModalVisible = false
+            this.selectedPokemon = null
         }
     }
 }

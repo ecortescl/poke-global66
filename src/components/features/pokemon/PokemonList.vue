@@ -17,7 +17,8 @@
         <div class="px-4 py-4">
             <div v-if="displayedPokemons.length > 0" class="space-y-4">
                 <div v-for="pokemon in displayedPokemons" :key="pokemon.name"
-                    class="bg-white rounded-lg shadow-sm p-4 flex items-center justify-between">
+                    class="bg-white rounded-lg shadow-sm p-4 flex items-center justify-between cursor-pointer hover:bg-gray-50 transition-colors"
+                    @click="openPokemonModal(pokemon)">
                     <!-- Información del Pokémon -->
                     <div class="flex items-center space-x-4">
                         <!-- Contenedor de imagen con animación de captura -->
@@ -26,12 +27,13 @@
                             <img v-if="!isFavorite(pokemon.name) || releasingPokemon === pokemon.name"
                                 :src="getPokemonImageUrl(pokemon)" :alt="pokemon.name"
                                 class="w-12 h-12 object-contain transition-all duration-300" :class="{
-                                    'animate-pulse opacity-50': capturingPokemon === pokemon.name,
+                                    'pokemon-capturing': capturingPokemon === pokemon.name,
                                     'opacity-0': releasingPokemon === pokemon.name
                                 }" @error="(e) => handleImageError(e, pokemon)" />
 
                             <!-- Pokeball estática (cuando ya es favorito y no se está procesando) -->
-                            <Pokeball v-if="isFavorite(pokemon.name) && !capturingPokemon && !releasingPokemon"
+                            <Pokeball
+                                v-if="isFavorite(pokemon.name) && capturingPokemon !== pokemon.name && releasingPokemon !== pokemon.name"
                                 state="static" />
 
                             <!-- Pokeball con animación de captura -->
@@ -51,7 +53,7 @@
                     </div>
 
                     <!-- Botón de favorito -->
-                    <button @click="handleToggleFavorite(pokemon)" class="p-2" :disabled="isProcessingFavorite">
+                    <button @click.stop="handleToggleFavorite(pokemon)" class="p-2" :disabled="isProcessingFavorite">
                         <svg :class="isFavorite(pokemon.name) ? 'text-orange-400 fill-current' : 'text-gray-300'"
                             class="w-6 h-6" viewBox="0 0 24 24">
                             <path
@@ -83,6 +85,9 @@
             <!-- Sentinel element para detectar scroll -->
             <div ref="sentinel" class="h-10 w-full"></div>
         </div>
+
+        <!-- Modal de detalles del Pokémon -->
+        <PokemonDetailModal :pokemon="selectedPokemon" :isVisible="isModalVisible" @close="closeModal" />
     </div>
 </template>
 
@@ -91,12 +96,14 @@ import { mapState, mapActions } from 'pinia'
 import { usePokemonStore } from '@/stores/pokemon'
 import { useFavoritesStore } from '@/stores/favorites'
 import { Pokeball } from '@/components/ui'
+import PokemonDetailModal from './PokemonDetailModal.vue'
 
 export default {
     name: 'PokemonList',
 
     components: {
-        Pokeball
+        Pokeball,
+        PokemonDetailModal
     },
 
     data() {
@@ -106,7 +113,9 @@ export default {
             isLoadingMore: false,
             observer: null,
             capturingPokemon: null, // Pokémon que está siendo capturado
-            releasingPokemon: null  // Pokémon que está siendo liberado
+            releasingPokemon: null,  // Pokémon que está siendo liberado
+            selectedPokemon: null, // Pokémon seleccionado para el modal
+            isModalVisible: false // Controlar visibilidad del modal
         }
     },
 
@@ -246,6 +255,18 @@ export default {
             this.$nextTick(() => {
                 this.setupIntersectionObserver()
             })
+        },
+
+        // Abrir modal con detalles del Pokémon
+        openPokemonModal(pokemon) {
+            this.selectedPokemon = pokemon
+            this.isModalVisible = true
+        },
+
+        // Cerrar modal
+        closeModal() {
+            this.isModalVisible = false
+            this.selectedPokemon = null
         }
     },
 
@@ -278,5 +299,36 @@ export default {
 </script>
 
 <style scoped>
-/* Solo mantener estilos específicos del componente */
+/* Efecto de captura para el Pokémon */
+.pokemon-capturing {
+    filter: hue-rotate(180deg) contrast(1.5) brightness(0.8);
+    animation: pokemonCapture 2s ease-in-out;
+}
+
+@keyframes pokemonCapture {
+    0% {
+        filter: hue-rotate(0deg) contrast(1) brightness(1);
+        transform: scale(1);
+    }
+
+    25% {
+        filter: hue-rotate(90deg) contrast(1.3) brightness(0.9);
+        transform: scale(1.05);
+    }
+
+    50% {
+        filter: hue-rotate(180deg) contrast(1.5) brightness(0.8);
+        transform: scale(0.95);
+    }
+
+    75% {
+        filter: hue-rotate(270deg) contrast(1.3) brightness(0.9);
+        transform: scale(1.02);
+    }
+
+    100% {
+        filter: hue-rotate(360deg) contrast(1) brightness(1);
+        transform: scale(1);
+    }
+}
 </style>
