@@ -8,6 +8,9 @@
     "build": "vite build",
     "preview": "vite preview",
     "test:unit": "vitest",
+    "test:run": "vitest run",
+    "test:coverage": "vitest run --coverage",
+    "test:watch": "vitest --watch",
     "format": "prettier --write src/"
   },
   "dependencies": {

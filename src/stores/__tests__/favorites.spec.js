@@ -138,6 +138,9 @@ describe('Favorites Store', () => {
     it('debe agregar pokemon que no existe en favoritos', () => {
       const pokemon = { name: 'pikachu', id: 25 }
 
+      // Limpiar favoritos antes del test
+      favoritesStore.favoritePokemons = []
+
       favoritesStore.addFavorite(pokemon)
 
       expect(favoritesStore.favoritePokemons).toHaveLength(1)
